@@ -24,15 +24,10 @@ import moment from "moment";
 
 function AddNewInterview() {
   const [openDialog, setOpenDialog] = useState(false);
-  const [form, setForm] = useState({
-    jobPosition: "",
-    jobDesc: "",
-    jobExperience: "",
-  });
-
-  const [jobPosition, setJobPosition] = useState();
-  const [jobDesc, setJobDesc] = useState();
-  const [jobExperience, setJobExperience] = useState();
+  const [jobPosition, setJobPosition] = useState("");
+  const [jobDesc, setJobDesc] = useState("");
+  const [jobExperience, setJobExperience] = useState("");
+  const [questionCount, setQuestionCount] = useState(5);
   const [loading, setLoading] = useState(false);
 
   const [jsonResponse, setJsonResponse] = useState([]);
@@ -43,9 +38,11 @@ function AddNewInterview() {
     e.preventDefault();
     setLoading(true);
     try {
-      console.log(jobPosition, jobDesc, jobExperience);
-      const questionCount =
-        process.env.NEXT_PUBLIC_INTERVIEW_QUESTION_COUNT || "5";
+      console.log(jobPosition, jobDesc, jobExperience, questionCount);
+      const count =
+        questionCount ||
+        process.env.NEXT_PUBLIC_INTERVIEW_QUESTION_COUNT ||
+        "5";
       const InputPrompt =
         "Job Position: " +
         jobPosition +
@@ -54,7 +51,7 @@ function AddNewInterview() {
         ", Years Of Experience: " +
         jobExperience +
         ". Based on this information, provide exactly " +
-        questionCount +
+        count +
         " interview questions with answers in valid JSON array format. Each object must have 'Question' and 'Answer' fields.";
 
       const result = await chatSession.sendMessage(InputPrompt);
@@ -121,14 +118,14 @@ function AddNewInterview() {
               Plan Your Mock Interview
             </DialogTitle>
             <DialogDescription className="text-sm text-gray-500">
-              Fill in the job role, tech stack, and experience to get
-              AI-generated interview questions.
+              Fill in the job role, tech stack, experience, and preferred number of questions.
             </DialogDescription>
             <form onSubmit={onSubmit} className="space-y-6 mt-6">
               <div>
                 <label className="block mb-2 font-medium">Job Role</label>
                 <Input
                   placeholder="e.g., Frontend Developer"
+                  value={jobPosition}
                   onChange={(e) => setJobPosition(e.target.value)}
                   required
                 />
@@ -137,24 +134,43 @@ function AddNewInterview() {
                 <label className="block mb-2 font-medium">Tech Stack</label>
                 <Textarea
                   placeholder="e.g., React, TypeScript, TailwindCSS"
+                  value={jobDesc}
                   onChange={(e) => setJobDesc(e.target.value)}
                   required
                 />
               </div>
-              <div>
-                <label className="block mb-2 font-medium">
-                  Years of Experience
-                </label>
-                <Input
-                  type="number"
-                  placeholder="e.g., 2"
-                  max="50"
-                  onChange={(e) => setJobExperience(e.target.value)}
-                  required
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-2 font-medium">
+                    Years of Experience
+                  </label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 2"
+                    min="0"
+                    max="50"
+                    value={jobExperience}
+                    onChange={(e) => setJobExperience(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block mb-2 font-medium">
+                    Number of Questions
+                  </label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 3 or 5"
+                    min="1"
+                    max="15"
+                    value={questionCount}
+                    onChange={(e) => setQuestionCount(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
               <div className="flex justify-end gap-4 pt-4">
-                <Button variant="ghost" onClick={() => setOpenDialog(false)}>
+                <Button variant="ghost" type="button" onClick={() => setOpenDialog(false)}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={loading}>
