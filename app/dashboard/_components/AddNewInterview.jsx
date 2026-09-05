@@ -40,65 +40,69 @@ function AddNewInterview() {
   const router = useRouter();
 
   const onSubmit = async (e) => {
-    setLoading(true);
     e.preventDefault();
-    console.log(jobPosition, jobDesc, jobExperience);
-    const InputPrompt =
-      "Job Position: " +
-      jobPosition +
-      "Job Description:" +
-      jobDesc +
-      "YearsOfExperience:" +
-      jobExperience +
-      ",Depends on this information please give me" +
-      process.env.NEXT_PUBLIC_INTERVIEW_QUESTION_COUNT +
-      "Interview question with Answered in json Format, GiveQuestion and Answered as field in JSON";
+    setLoading(true);
+    try {
+      console.log(jobPosition, jobDesc, jobExperience);
+      const questionCount =
+        process.env.NEXT_PUBLIC_INTERVIEW_QUESTION_COUNT || "5";
+      const InputPrompt =
+        "Job Position: " +
+        jobPosition +
+        ", Job Description: " +
+        jobDesc +
+        ", Years Of Experience: " +
+        jobExperience +
+        ". Based on this information, provide exactly " +
+        questionCount +
+        " interview questions with answers in valid JSON array format. Each object must have 'Question' and 'Answer' fields.";
 
-    const result = await chatSession.sendMessage(InputPrompt);
-    const rawResponse = result.response.text();
-    const jsonMatch = rawResponse.match(/\[[\s\S]*\]/);
-    const MockJsonResponse = jsonMatch
-      ? jsonMatch[0].trim()
-      : rawResponse
-          .replace(/```json/g, "")
-          .replace(/```/g, "")
-          .replace(/\*\*Note\:\*\*(.|\n)*/, "")
-          .trim();
+      const result = await chatSession.sendMessage(InputPrompt);
+      const rawResponse = result.response.text();
+      const jsonMatch = rawResponse.match(/\[[\s\S]*\]/);
+      const MockJsonResponse = jsonMatch
+        ? jsonMatch[0].trim()
+        : rawResponse
+            .replace(/```json/g, "")
+            .replace(/```/g, "")
+            .replace(/\*\*Note\:\*\*(.|\n)*/, "")
+            .trim();
 
-    console.log("MockJsonResponse", MockJsonResponse);
+      console.log("MockJsonResponse", MockJsonResponse);
 
-    setJsonResponse(MockJsonResponse);
+      if (!MockJsonResponse || MockJsonResponse === "[]") {
+        alert("Failed to generate valid interview questions. Please try again.");
+        return;
+      }
 
-    if (!MockJsonResponse) {
-      alert("Please Try Again");
+      setJsonResponse(MockJsonResponse);
+
+      const resp = await db
+        .insert(MockInterview)
+        .values({
+          mockId: uuidv4(),
+          jsonMockResp: MockJsonResponse,
+          jobPosition: jobPosition,
+          jobDesc: jobDesc,
+          jobExperience: jobExperience,
+          createdBy: user?.primaryEmailAddress?.emailAddress || "anonymous",
+          createdAt: moment().format("DD-MM-YYYY"),
+        })
+        .returning({
+          mockId: MockInterview.mockId,
+        });
+
+      console.log("inserted id:", resp);
+      setOpenDialog(false);
+      if (resp && resp[0]?.mockId) {
+        router.push(`/dashboard/interview/${resp[0]?.mockId}`);
+      }
+    } catch (err) {
+      console.error("Error generating interview:", err);
+      alert("Error: " + (err.message || "Failed to generate interview. Please check AI provider."));
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const resp = await db
-      .insert(MockInterview)
-      .values({
-        mockId: uuidv4(),
-        jsonMockResp: MockJsonResponse,
-        jobPosition: jobPosition,
-        jobDesc: jobDesc,
-        jobExperience: jobExperience,
-        createdBy: user?.primaryEmailAddress?.emailAddress,
-        createdAt: moment().format("DD-MM-YYYY"),
-      })
-      .returning({
-        mockId: MockInterview.mockId,
-      });
-
-    console.log("inserted id:", resp);
-    setForm({
-      jobPosition: "",
-      jobDesc: "",
-      jobExperience: "",
-    });
-    setOpenDialog(false);
-    router.push(`/dashboard/interview/${resp[0]?.mockId}`);
-    setLoading(false);
   };
 
   return (
