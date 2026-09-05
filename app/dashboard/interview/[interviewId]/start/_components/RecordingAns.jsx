@@ -54,62 +54,72 @@ const RecordingAns = ({ mockInterviewQns, activeQnIndex, interviewData }) => {
     if (isRecording) {
       stopSpeechToText();
     } else {
+      setUserAns("");
+      setResults([]);
       startSpeechToText();
     }
   };
 
   const updateUserAns = async () => {
-    console.log("User Answer: ", userAns);
+    console.log("Submitting User Answer: ", userAns);
+    if (!userAns || userAns.trim().length < 5) {
+      toast.error("Answer is too short. Please speak or type your answer.");
+      return;
+    }
 
     setLoading(true);
-    const feedbackPrompt =
-      "Question: " +
-      mockInterviewQns[activeQnIndex]?.Question +
-      ", User Answer: " +
-      userAns +
-      ". Based on the question and user answer, please provide a rating and feedback for improvement. " +
-      "Provide your response in JSON format with 'rating' and 'feedback' fields. " +
-      "Keep the feedback brief (3-5 lines) and focus on areas of improvement.";
-
-    const result = await chatSession.sendMessage(feedbackPrompt);
-    const rawFeedback = result.response.text();
-    const jsonMatch = rawFeedback.match(/\{[\s\S]*\}/);
-    let jsonResponse = {};
+    toast.info("Evaluating your answer with AI...");
     try {
-      jsonResponse = JSON.parse(
-        jsonMatch
-          ? jsonMatch[0]
-          : rawFeedback.replace(/```json/g, "").replace(/```/g, "").trim()
-      );
-    } catch (err) {
-      console.error("Failed to parse JSON feedback:", err);
-      jsonResponse = { feedback: rawFeedback, rating: "5" };
-    }
+      const currentQn = mockInterviewQns?.[activeQnIndex]?.Question || "Interview Question";
+      const currentAns = mockInterviewQns?.[activeQnIndex]?.Answer || "";
 
-    const resp = await db.insert(UserAnswer).values({
-      mockIdRef: interviewData?.mockId,
-      question: mockInterviewQns[activeQnIndex]?.Question,
-      correctAns: mockInterviewQns[activeQnIndex]?.Answer,
-      userAns: userAns,
-      feedback: jsonResponse?.feedback,
-      rating: jsonResponse?.rating,
-      userEmail: user?.primaryEmailAddress?.emailAddress,
-      createdAt: moment().format("DD-MM-YYYY"),
-    });
+      const feedbackPrompt =
+        "Question: " +
+        currentQn +
+        ", User Answer: " +
+        userAns +
+        ". Based on the question and user answer, please provide a rating (out of 10) and construct practical feedback for improvement. " +
+        "Provide your response in JSON format with 'rating' and 'feedback' fields. " +
+        "Keep the feedback brief (3-5 lines) and focus on areas of improvement.";
 
-    if (resp) {
-      toast(
-        <div className="flex items-center">
-          <CheckCircleIcon className="text-green-500 mr-1 size-4" /> Your answer
-          has been saved successfully.
-        </div>
-      );
-      setUserAns("");
+      const result = await chatSession.sendMessage(feedbackPrompt);
+      const rawFeedback = result.response.text();
+      const jsonMatch = rawFeedback.match(/\{[\s\S]*\}/);
+      let jsonResponse = {};
+      try {
+        jsonResponse = JSON.parse(
+          jsonMatch
+            ? jsonMatch[0]
+            : rawFeedback.replace(/```json/g, "").replace(/```/g, "").trim()
+        );
+      } catch (err) {
+        console.error("Failed to parse JSON feedback:", err);
+        jsonResponse = { feedback: rawFeedback, rating: "5" };
+      }
+
+      const resp = await db.insert(UserAnswer).values({
+        mockIdRef: interviewData?.mockId,
+        question: currentQn,
+        correctAns: currentAns,
+        userAns: userAns,
+        feedback: jsonResponse?.feedback || "Answer recorded.",
+        rating: String(jsonResponse?.rating || "5"),
+        userEmail: user?.primaryEmailAddress?.emailAddress || "anonymous",
+        createdAt: moment().format("DD-MM-YYYY"),
+      });
+
+      if (resp) {
+        toast.success("Your answer and AI feedback have been saved successfully.");
+        setUserAns("");
+        setResults([]);
+      }
+    } catch (error) {
+      console.error("Error saving user answer feedback:", error);
+      toast.error("Failed to evaluate answer. " + (error.message || ""));
+    } finally {
+      setLoading(false);
       setResults([]);
     }
-
-    setResults([]);
-    setLoading(false);
   };
 
   return (

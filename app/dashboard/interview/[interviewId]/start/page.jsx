@@ -19,27 +19,29 @@ const StartInterview = () => {
   const [activeQnIndex, setActiveQnIndex] = useState(0);
 
   const GetInterviewDetails = async () => {
-    const result = await db
-      .select()
-      .from(MockInterview)
-      .where(eq(MockInterview.mockId, params.interviewId));
+    if (!params?.interviewId) return;
+    try {
+      const result = await db
+        .select()
+        .from(MockInterview)
+        .where(eq(MockInterview.mockId, params.interviewId));
 
-    const jsonMockResp = JSON.parse(result[0].jsonMockResp);
-
-    console.log(jsonMockResp);
-
-    setMockInterviewQns(jsonMockResp);
-    setInterviewData(result[0]);
+      if (result && result.length > 0 && result[0]?.jsonMockResp) {
+        const jsonMockResp = JSON.parse(result[0].jsonMockResp);
+        console.log("Loaded interview questions:", jsonMockResp);
+        setMockInterviewQns(jsonMockResp);
+        setInterviewData(result[0]);
+      }
+    } catch (err) {
+      console.error("Failed to load interview details:", err);
+    }
   };
 
   useEffect(() => {
-    if (params.interviewId) {
-      console.log(params.interviewId);
+    if (params?.interviewId) {
       GetInterviewDetails();
     }
-
-    GetInterviewDetails();
-  }, [params.interviewId]);
+  }, [params?.interviewId]);
 
   return (
     <div>
