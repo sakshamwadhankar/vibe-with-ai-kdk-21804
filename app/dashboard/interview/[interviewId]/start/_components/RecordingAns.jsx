@@ -123,43 +123,53 @@ const RecordingAns = ({ mockInterviewQns, activeQnIndex, interviewData }) => {
   };
 
   return (
-    <div className="flex items-center justify-center flex-col">
-      <div className="flex flex-col mt-20 justify-center items-center bg-black rounded-lg p-5">
+    <div className="flex items-center justify-center flex-col my-6">
+      <div className="relative w-full max-w-md h-[320px] flex flex-col justify-center items-center bg-neutral-950 border border-neutral-800/80 rounded-3xl overflow-hidden shadow-2xl p-4">
         <Image
           src="/webcam.png"
-          width={200}
-          height={200}
-          className="absolute"
-          alt="Webcam"
+          width={180}
+          height={180}
+          className="absolute opacity-40"
+          alt="Webcam placeholder"
           priority
         />
         <Webcam
           mirrored={true}
           style={{
             width: "100%",
-            height: 300,
+            height: "100%",
+            objectFit: "cover",
+            borderRadius: "1rem",
             zIndex: 10,
           }}
         />
+        {isRecording && (
+          <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-950/80 border border-rose-600/60 text-[10px] font-mono text-rose-300">
+            <span className="size-2 rounded-full bg-rose-500 animate-ping" />
+            <span>REC</span>
+          </div>
+        )}
       </div>
+
       <Button
         disabled={loading}
-        variant="outline"
-        className="my-10 "
+        className={`my-8 h-12 px-8 rounded-xl font-semibold shadow-lg transition-all ${
+          isRecording
+            ? "bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30 animate-pulse"
+            : "bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-indigo-600/30"
+        }`}
         onClick={startStopRecording}
       >
         {isRecording ? (
-          <>
-            <h2 className="flex items-center gap-x-2 text-red-500 animate-pulse">
-              <StopCircleIcon />
-              Stop Recording
-            </h2>
-          </>
+          <span className="flex items-center gap-2">
+            <StopCircleIcon className="size-4" />
+            Stop Recording Answer
+          </span>
         ) : (
-          <h2 className="flex items-center gap-x-2 text-primary">
-            <Mic />
-            Record Answer...
-          </h2>
+          <span className="flex items-center gap-2">
+            <Mic className="size-4" />
+            Record Answer
+          </span>
         )}
       </Button>
     </div>

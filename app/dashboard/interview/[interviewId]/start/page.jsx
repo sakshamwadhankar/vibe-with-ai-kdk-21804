@@ -60,20 +60,29 @@ const StartInterview = () => {
         />
       </div>
 
-      <div className="flex justify-end gap-6">
+      <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-neutral-800/80">
         {activeQnIndex > 0 && (
-          <Button onClick={() => setActiveQnIndex(activeQnIndex - 1)}>
+          <Button
+            variant="outline"
+            className="border-neutral-800 bg-neutral-900/80 hover:bg-neutral-800 text-neutral-300 hover:text-white rounded-xl h-11 px-6"
+            onClick={() => setActiveQnIndex(activeQnIndex - 1)}
+          >
             Previous Question
           </Button>
         )}
         {activeQnIndex != mockInterviewQns?.length - 1 && (
-          <Button onClick={() => setActiveQnIndex(activeQnIndex + 1)}>
+          <Button
+            className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl h-11 px-6 shadow-md shadow-indigo-600/20"
+            onClick={() => setActiveQnIndex(activeQnIndex + 1)}
+          >
             Next Question
           </Button>
         )}
         {activeQnIndex == mockInterviewQns?.length - 1 && (
           <Link href={`/dashboard/interview/${interviewData?.mockId}/feedback`}>
-            <Button>End Interview</Button>
+            <Button className="bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl h-11 px-7 shadow-lg shadow-rose-600/25">
+              End Interview & View Feedback
+            </Button>
           </Link>
         )}
       </div>

@@ -41,17 +41,18 @@ export const metadata = {
   },
 };
 
+const themeColor = "#06070a";
+
 export const viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: themeColor,
 };
-
-export const themeColor = "#ffffff";
 
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" className="dark">
         <head>
           {/* favicon */}
           <link rel="icon" type="image/png" href="/logo.svg" />
