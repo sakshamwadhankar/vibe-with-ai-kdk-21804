@@ -20,7 +20,7 @@ export const metadata = {
     "An interactive platform for users to practice mock interviews and receive AI-generated feedback to enhance their skills.",
   keywords:
     "AI, Mock Interview, Feedback, Practice, Interview Skills, Resume, ATS, Job Preparation",
-  author: "Sudharsan A",
+  author: "Saksham Wadhankar",
   robots: "index, follow",
   charset: "UTF-8",
 
@@ -30,7 +30,6 @@ export const metadata = {
     description:
       "An interactive platform for users to practice mock interviews and receive AI-generated feedback to enhance their skills.",
     image: "/ai-mock-interview.jpg",
-    url: "https://quest-ai-eight.vercel.app/",
     type: "website",
   },
   twitter: {
@@ -66,7 +65,7 @@ export default function RootLayout({ children }) {
             name="keywords"
             content="AI, Mock Interview, Feedback, Practice"
           />
-          <meta name="author" content="Sudharsan A" />
+          <meta name="author" content="Saksham Wadhankar" />
 
           {/* Open Graph */}
           <meta property="og:title" content={metadata.openGraph.title} />
