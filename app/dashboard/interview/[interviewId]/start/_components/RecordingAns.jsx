@@ -72,13 +72,19 @@ const RecordingAns = ({ mockInterviewQns, activeQnIndex, interviewData }) => {
       "Keep the feedback brief (3-5 lines) and focus on areas of improvement.";
 
     const result = await chatSession.sendMessage(feedbackPrompt);
-
-    const mockJsonResponse = result.response
-      .text()
-      .replace("```json", "")
-      .replace("```", "");
-
-    const jsonResponse = JSON.parse(mockJsonResponse);
+    const rawFeedback = result.response.text();
+    const jsonMatch = rawFeedback.match(/\{[\s\S]*\}/);
+    let jsonResponse = {};
+    try {
+      jsonResponse = JSON.parse(
+        jsonMatch
+          ? jsonMatch[0]
+          : rawFeedback.replace(/```json/g, "").replace(/```/g, "").trim()
+      );
+    } catch (err) {
+      console.error("Failed to parse JSON feedback:", err);
+      jsonResponse = { feedback: rawFeedback, rating: "5" };
+    }
 
     const resp = await db.insert(UserAnswer).values({
       mockIdRef: interviewData?.mockId,

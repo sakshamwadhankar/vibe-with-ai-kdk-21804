@@ -55,12 +55,15 @@ function AddNewInterview() {
       "Interview question with Answered in json Format, GiveQuestion and Answered as field in JSON";
 
     const result = await chatSession.sendMessage(InputPrompt);
-    const MockJsonResponse = result.response
-      .text()
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .replace(/\*\*Note\:\*\*(.|\n)*/, "")
-      .trim();
+    const rawResponse = result.response.text();
+    const jsonMatch = rawResponse.match(/\[[\s\S]*\]/);
+    const MockJsonResponse = jsonMatch
+      ? jsonMatch[0].trim()
+      : rawResponse
+          .replace(/```json/g, "")
+          .replace(/```/g, "")
+          .replace(/\*\*Note\:\*\*(.|\n)*/, "")
+          .trim();
 
     console.log("MockJsonResponse", MockJsonResponse);
 
