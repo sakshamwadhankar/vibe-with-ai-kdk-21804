@@ -5,17 +5,37 @@ export async function POST(req) {
   try {
     const { prompt } = await req.json();
 
-    const provider = process.env.AI_PROVIDER || "ollama";
-    const ollamaBaseUrl =
-      process.env.OLLAMA_BASE_URL ||
-      process.env.NEXT_PUBLIC_OLLAMA_BASE_URL ||
-      "http://localhost:11434";
-    const ollamaModel =
-      process.env.OLLAMA_MODEL ||
-      process.env.NEXT_PUBLIC_OLLAMA_MODEL ||
-      "gemma4:26b";
+    const geminiApiKey =
+      process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const provider =
+      process.env.AI_PROVIDER || (geminiApiKey ? "gemini" : "ollama");
 
-    if (provider === "ollama") {
+    if (provider === "gemini" || (geminiApiKey && provider !== "ollama")) {
+      if (!geminiApiKey) {
+        throw new Error(
+          "Gemini API key is not configured. Please add NEXT_PUBLIC_GEMINI_API_KEY or GEMINI_API_KEY in your environment variables."
+        );
+      }
+
+      const genAI = new GoogleGenerativeAI(geminiApiKey);
+      const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+      });
+
+      const result = await model.generateContent(prompt);
+      const geminiResponse = await result.response;
+      return NextResponse.json({ text: geminiResponse.text() });
+    } else {
+      // Local / Remote Ollama Provider
+      const ollamaBaseUrl =
+        process.env.OLLAMA_BASE_URL ||
+        process.env.NEXT_PUBLIC_OLLAMA_BASE_URL ||
+        "http://localhost:11434";
+      const ollamaModel =
+        process.env.OLLAMA_MODEL ||
+        process.env.NEXT_PUBLIC_OLLAMA_MODEL ||
+        "gemma4:26b";
+
       const response = await fetch(`${ollamaBaseUrl}/api/generate`, {
         method: "POST",
         headers: {
@@ -39,21 +59,6 @@ export async function POST(req) {
 
       const data = await response.json();
       return NextResponse.json({ text: data.response });
-    } else {
-      // Google Gemini Cloud Provider
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("Gemini API key is not configured in .env.local");
-      }
-
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-      });
-
-      const result = await model.generateContent(prompt);
-      const geminiResponse = await result.response;
-      return NextResponse.json({ text: geminiResponse.text() });
     }
   } catch (error) {
     console.error("AI Generation Route Error:", error);
